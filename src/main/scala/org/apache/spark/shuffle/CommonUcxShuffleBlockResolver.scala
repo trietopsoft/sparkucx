@@ -7,7 +7,7 @@ package org.apache.spark.shuffle
 import java.io.{File, RandomAccessFile}
 import java.util.concurrent.{ConcurrentHashMap, CopyOnWriteArrayList}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.openucx.jucx.UcxUtils
 import org.openucx.jucx.ucp.{UcpMemMapParams, UcpMemory}
@@ -115,9 +115,9 @@ abstract class CommonUcxShuffleBlockResolver(ucxShuffleManager: CommonUcxShuffle
 
   def removeShuffle(shuffleId: Int): Unit = {
     fileMappings.remove(shuffleId).foreach((mappings: CopyOnWriteArrayList[UcpMemory]) =>
-      mappings.asScala.par.foreach(unregisterAndUnmap))
+      mappings.asScala.foreach(unregisterAndUnmap))
     offsetMappings.remove(shuffleId).foreach((mappings: CopyOnWriteArrayList[UcpMemory]) =>
-      mappings.asScala.par.foreach(unregisterAndUnmap))
+      mappings.asScala.foreach(unregisterAndUnmap))
   }
 
   override def stop(): Unit = {

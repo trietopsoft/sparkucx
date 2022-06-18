@@ -2,7 +2,7 @@
 * Copyright (C) Mellanox Technologies Ltd. 2020. ALL RIGHTS RESERVED.
 * See file LICENSE for terms.
 */
-package org.apache.spark.shuffle.compat.spark_3_1
+package org.apache.spark.shuffle.compat.spark_3_2
 
 import java.util
 import java.util.Optional

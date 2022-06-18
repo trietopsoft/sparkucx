@@ -2,7 +2,7 @@
  * Copyright (C) Mellanox Technologies Ltd. 2019. ALL RIGHTS RESERVED.
  * See file LICENSE for terms.
  */
-package org.apache.spark.shuffle.ucx.reducer.compat.spark_3_1;
+package org.apache.spark.shuffle.ucx.reducer.compat.spark_3_2;
 
 import org.apache.spark.network.shuffle.BlockFetchingListener;
 import org.apache.spark.shuffle.UcxWorkerWrapper;

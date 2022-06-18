@@ -1,0 +1,8 @@
+*.deb
+.bloop
+.metals
+.vscode
+target
+.classpath
+.project
+.settings

@@ -2,22 +2,22 @@
 * Copyright (C) Mellanox Technologies Ltd. 2019. ALL RIGHTS RESERVED.
 * See file LICENSE for terms.
 */
-package org.apache.spark.shuffle.compat.spark_3_1
+package org.apache.spark.shuffle.compat.spark_3_2
 
 import java.io.InputStream
 import java.util.concurrent.LinkedBlockingQueue
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.spark.internal.{Logging, config}
 import org.apache.spark.io.CompressionCodec
 import org.apache.spark.serializer.SerializerManager
-import org.apache.spark.shuffle.ucx.reducer.compat.spark_3_1.UcxShuffleClient
+import org.apache.spark.shuffle.ucx.reducer.compat.spark_3_2.UcxShuffleClient
 import org.apache.spark.shuffle.{ShuffleReadMetricsReporter, ShuffleReader, UcxShuffleHandle, UcxShuffleManager}
 import org.apache.spark.storage.{BlockId, BlockManager, ShuffleBlockBatchId, ShuffleBlockFetcherIterator, ShuffleBlockId}
 import org.apache.spark.util.CompletionIterator
 import org.apache.spark.util.collection.ExternalSorter
-import org.apache.spark.{InterruptibleIterator, SparkEnv, SparkException, TaskContext}
+import org.apache.spark.{InterruptibleIterator, MapOutputTracker, SparkEnv, SparkException, TaskContext}
 
 
 /**
@@ -32,6 +32,7 @@ class UcxShuffleReader[K, C](handle: UcxShuffleHandle[K, _, C],
                              context: TaskContext,
                              serializerManager: SerializerManager = SparkEnv.get.serializerManager,
                              blockManager: BlockManager = SparkEnv.get.blockManager,
+                             mapOutputTracker: MapOutputTracker = SparkEnv.get.mapOutputTracker,
                              readMetrics: ShuffleReadMetricsReporter,
                              shouldBatchFetch: Boolean = false) extends ShuffleReader[K, C] with Logging {
 
@@ -59,6 +60,7 @@ class UcxShuffleReader[K, C](handle: UcxShuffleHandle[K, _, C],
         context,
         shuffleClient,
         blockManager,
+        mapOutputTracker,
         blocksByAddressIterator1,
         serializerManager.wrapStream,
         // Note: we use getSizeAsMb when no suffix is provided for backwards compatibility
@@ -66,8 +68,11 @@ class UcxShuffleReader[K, C](handle: UcxShuffleHandle[K, _, C],
         SparkEnv.get.conf.get(config.REDUCER_MAX_REQS_IN_FLIGHT),
         SparkEnv.get.conf.get(config.REDUCER_MAX_BLOCKS_IN_FLIGHT_PER_ADDRESS),
         SparkEnv.get.conf.get(config.MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM),
+        SparkEnv.get.conf.get(config.SHUFFLE_MAX_ATTEMPTS_ON_NETTY_OOM),
         SparkEnv.get.conf.get(config.SHUFFLE_DETECT_CORRUPT),
         SparkEnv.get.conf.get(config.SHUFFLE_DETECT_CORRUPT_MEMORY),
+        SparkEnv.get.conf.get(config.SHUFFLE_CHECKSUM_ENABLED),
+        SparkEnv.get.conf.get(config.SHUFFLE_CHECKSUM_ALGORITHM),
         readMetrics,
         fetchContinuousBlocksInBatch)
 

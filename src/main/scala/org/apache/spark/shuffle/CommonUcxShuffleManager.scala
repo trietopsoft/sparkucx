@@ -6,7 +6,7 @@ package org.apache.spark.shuffle
 
 import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.{concurrent, mutable}
 
 import org.openucx.jucx.ucp.UcpMemory

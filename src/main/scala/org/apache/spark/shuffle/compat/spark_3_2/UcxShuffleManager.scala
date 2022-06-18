@@ -4,11 +4,14 @@
 */
 package org.apache.spark.shuffle
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+
+import org.apache.spark.shuffle.sort.BypassMergeSortShuffleFactory
 
 import org.apache.spark.shuffle.api.ShuffleExecutorComponents
-import org.apache.spark.shuffle.compat.spark_3_0.{UcxShuffleBlockResolver, UcxShuffleReader}
-import org.apache.spark.shuffle.sort.{SerializedShuffleHandle, SortShuffleWriter, UnsafeShuffleWriter}
+import org.apache.spark.shuffle.compat.spark_3_2.{UcxShuffleBlockResolver, UcxShuffleReader}
+import org.apache.spark.shuffle.sort.{BypassMergeSortShuffleWriter, BypassMergeSortShuffleHandle, SerializedShuffleHandle, SortShuffleWriter, UnsafeShuffleWriter}
+import org.apache.spark.shuffle.sort.BypassMergeSortShuffleWriter
 import org.apache.spark.util.ShutdownHookManager
 import org.apache.spark.{ShuffleDependency, SparkConf, SparkEnv, TaskContext}
 
@@ -44,18 +47,25 @@ class UcxShuffleManager(override val conf: SparkConf, isDriver: Boolean) extends
           env.conf,
           metrics,
           shuffleExecutorComponents)
+      case bypassMergeSortHandle: BypassMergeSortShuffleHandle[K @unchecked, V @unchecked] =>
+        BypassMergeSortShuffleFactory.bypassMerge(
+          bypassMergeSortHandle,
+          mapId,
+          metrics,
+          shuffleExecutorComponents)
       case other: BaseShuffleHandle[K@unchecked, V@unchecked, _] =>
         new SortShuffleWriter(
-          shuffleBlockResolver, other, mapId, context, shuffleExecutorComponents)
+          other, mapId, context, shuffleExecutorComponents)
     }
   }
 
-  override def getReader[K, C](handle: ShuffleHandle, startPartition: MapId, endPartition: MapId,
-                               context: TaskContext, metrics: ShuffleReadMetricsReporter): ShuffleReader[K, C] = {
+  override def getReader[K, C](handle: ShuffleHandle, startMapIndex: Int, endMapIndex: Int,
+                               startPartition: MapId, endPartition: MapId, context: TaskContext,
+                               metrics: ShuffleReadMetricsReporter): ShuffleReader[K, C] = {
 
     startUcxNodeIfMissing()
     shuffleIdToHandle.putIfAbsent(handle.shuffleId, handle.asInstanceOf[UcxShuffleHandle[K, _, C]])
-    new UcxShuffleReader(handle.asInstanceOf[UcxShuffleHandle[K,_,C]], startPartition, endPartition,
+    new UcxShuffleReader(handle.asInstanceOf[UcxShuffleHandle[K,_,C]], startMapIndex, endMapIndex, startPartition, endPartition,
       context, readMetrics = metrics, shouldBatchFetch = true)
   }
 
